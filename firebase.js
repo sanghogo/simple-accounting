@@ -15,6 +15,7 @@ export default function SimpleAccountingApp() {
   const [amount, setAmount] = useState("");
   const [memo, setMemo] = useState("");
   const [records, setRecords] = useState([]);
+  const [filterMonth, setFilterMonth] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,7 +43,6 @@ export default function SimpleAccountingApp() {
       setClient("");
       setAmount("");
       setMemo("");
-      // 저장 후 다시 불러오기
       const querySnapshot = await getDocs(collection(db, "records"));
       const fetchedData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setRecords(fetchedData.reverse());
@@ -68,13 +68,12 @@ export default function SimpleAccountingApp() {
   };
 
   const handleDelete = async (index) => {
-    const recordToDelete = records[index];
+    const recordToDelete = filteredRecords[index];
     if (!recordToDelete?.id) return;
 
     try {
       await deleteDoc(doc(db, "records", recordToDelete.id));
-      const updated = [...records];
-      updated.splice(index, 1);
+      const updated = [...records].filter((r) => r.id !== recordToDelete.id);
       setRecords(updated);
     } catch (error) {
       console.error("삭제 실패:", error);
@@ -87,6 +86,10 @@ export default function SimpleAccountingApp() {
       .filter((r) => r.date.startsWith(month))
       .reduce((sum, r) => sum + Number(r.amount), 0);
   };
+
+  const filteredRecords = filterMonth
+    ? records.filter((r) => r.date.startsWith(filterMonth))
+    : records;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -103,12 +106,20 @@ export default function SimpleAccountingApp() {
             <div className="text-right font-semibold text-blue-600 mt-2">
               📊 이번 달 총합: {getMonthlyTotal().toLocaleString()} 원
             </div>
+            <div className="mt-4">
+              <Input
+                type="month"
+                value={filterMonth}
+                onChange={(e) => setFilterMonth(e.target.value)}
+                className="h-12 rounded-xl"
+              />
+            </div>
           </CardContent>
         </Card>
       </motion.div>
 
       <div className="mt-8 grid gap-2 max-w-md mx-auto">
-        {records.map((r, idx) => (
+        {filteredRecords.map((r, idx) => (
           <Card key={r.id || idx} className="p-4 shadow-sm rounded-2xl">
             <CardContent>
               <div className="font-semibold">📅 {r.date}</div>
