@@ -1,3 +1,6 @@
+import { db } from "../firebase"; 
+import { collection, addDoc } from "firebase/firestore";
+import { getDocs } from "firebase/firestore";
 // firebase.js
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
